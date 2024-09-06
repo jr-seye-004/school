@@ -1,0 +1,138 @@
+models/
+│
+├── Student.js
+├── Teacher.js
+├── Course.js
+└── Payment.js
+
+
+routes/
+│
+├── students.js
+├── teachers.js
+├── courses.js
+└── payments.js
+
+
+src/
+│
+├── components/
+│   ├── Navbar.js
+│   ├── Students.js
+│   ├── Teachers.js
+│   ├── Courses.js
+│   ├── Payments.js
+│   ├── Home.js
+│   └── NotFound.js
+│
+├── services/
+│   └── api.js
+│
+├── App.js
+├── index.js
+└── App.css
+
+// import 'bootstrap/dist/css/bootstrap.min.css';
+
+
+// Définition du schéma et du modèle Payment
+const paymentSchema = new mongoose.Schema({
+  student: { name: { type: String, required: true } },
+  amount: { type: Number, required: true },
+  status: { type: String, default: 'Pending' },
+  date: { type: Date, default: Date.now },
+});
+
+const Payment = mongoose.model('Payment', paymentSchema);
+
+// Route pour obtenir tous les paiements
+app.get('/api/Payments', (req, res) => {
+  Payment.find()
+    .then(payments => res.json(payments))
+    .catch(err => res.status(400).json('Error: ' + err));
+});
+
+// Route pour enregistrer un nouveau paiement
+app.post('/api/Payments', (req, res) => {
+  const { student, amount, status } = req.body;
+
+  const newPayment = new Payment({
+    student,
+    amount,
+    status,
+  });
+
+  newPayment.save()
+    .then(payment => res.json(payment))
+    .catch(err => res.status(400).json('Error: ' + err));
+});
+
+
+
+
+
+
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function PaymentForm() {
+  const [studentName, setStudentName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [status, setStatus] = useState('Pending');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newPayment = {
+      student: { name: studentName },
+      amount: parseFloat(amount),
+      status,
+    };
+
+    axios.post('/api/payments', newPayment)
+      .then(response => {
+        setMessage('Payment successful!');
+        setStudentName('');
+        setAmount('');
+        setStatus('Pending');
+      })
+      .catch(error => {
+        console.error('There was an error processing the payment!', error);
+        setMessage('Payment failed.');
+      });
+  };
+
+  return (
+    <div className="container mt-4">
+      <h2 className="text-center mb-4">Make a Payment</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Student Name</label>
+          <input
+            type="text"
+            className="form-control"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Amount (USD)</label>
+          <input
+            type="number"
+            className="form-control"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary mt-3">Submit Payment</button>
+      </form>
+      {message && <p className="mt-3 text-center">{message}</p>}
+    </div>
+  );
+}
+
+export default PaymentForm;
